@@ -74,8 +74,6 @@ export class AuthService {
     });
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
-
   private async generateTokens(userId: string, email: string, plan: string) {
     const payload = { sub: userId, email, plan };
 
