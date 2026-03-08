@@ -1,41 +1,32 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import {
+  Injectable,
+  OnModuleInit,
+  OnModuleDestroy,
+  Logger,
+} from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 
 @Injectable()
 export class PrismaService implements OnModuleInit, OnModuleDestroy {
-  private _client: PrismaClient;
+  private readonly logger = new Logger(PrismaService.name);
+
+  // public để inject ở nơi khác, có đầy đủ type
+  readonly db: PrismaClient;
 
   constructor() {
     const adapter = new PrismaPg({
       connectionString: process.env.DATABASE_URL,
     });
-
-    this._client = new PrismaClient({ adapter });
-
-    return new Proxy(this, {
-      get(target, prop) {
-        if (prop in target) {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
-          return (target as any)[prop];
-        }
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        const val = (target._client as any)[prop];
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
-        return typeof val === 'function' ? val.bind(target._client) : val;
-      },
-    });
+    this.db = new PrismaClient({ adapter });
   }
 
   async onModuleInit() {
-    await this._client.$connect();
-    console.log('✅ Database connected');
-    await this._client.$queryRaw`SELECT 1`;
-    console.log('✅ Database query OK');
+    await this.db.$connect();
+    this.logger.log('✅ Database connected');
   }
 
   async onModuleDestroy() {
-    await this._client.$disconnect();
+    await this.db.$disconnect();
   }
 }
