@@ -26,10 +26,20 @@ export class AuthService {
 
     const hashed = await bcrypt.hash(dto.password, 12);
     const user = await this.prisma.db.user.create({
-      data: { name: dto.name, email: dto.email, password: hashed },
+      data: {
+        name: dto.name,
+        email: dto.email,
+        password: hashed,
+        role: dto.role,
+      },
     });
 
-    const tokens = await this.generateTokens(user.id, user.email, user.plan);
+    const tokens = await this.generateTokens(
+      user.id,
+      user.email,
+      user.plan,
+      user.role,
+    );
     await this.saveRefreshToken(user.id, tokens.refreshToken);
 
     return { user: this.sanitize(user), ...tokens };
@@ -44,7 +54,12 @@ export class AuthService {
     const match = await bcrypt.compare(dto.password, user.password);
     if (!match) throw new InvalidCredentialsException();
 
-    const tokens = await this.generateTokens(user.id, user.email, user.plan);
+    const tokens = await this.generateTokens(
+      user.id,
+      user.email,
+      user.plan,
+      user.role,
+    );
     await this.saveRefreshToken(user.id, tokens.refreshToken);
 
     return { user: this.sanitize(user), ...tokens };
@@ -53,7 +68,13 @@ export class AuthService {
   async refresh(userId: string, rawToken: string) {
     const user = await this.prisma.db.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, plan: true, refreshToken: true },
+      select: {
+        id: true,
+        email: true,
+        plan: true,
+        refreshToken: true,
+        role: true,
+      },
     });
 
     if (!user?.refreshToken) throw new InvalidRefreshTokenException();
@@ -61,7 +82,12 @@ export class AuthService {
     const match = await bcrypt.compare(rawToken, user.refreshToken);
     if (!match) throw new InvalidRefreshTokenException();
 
-    const tokens = await this.generateTokens(user.id, user.email, user.plan);
+    const tokens = await this.generateTokens(
+      user.id,
+      user.email,
+      user.plan,
+      user.role,
+    );
     await this.saveRefreshToken(user.id, tokens.refreshToken);
 
     return tokens;
@@ -74,8 +100,13 @@ export class AuthService {
     });
   }
 
-  private async generateTokens(userId: string, email: string, plan: string) {
-    const payload = { sub: userId, email, plan };
+  private async generateTokens(
+    userId: string,
+    email: string,
+    plan: string,
+    role: string,
+  ) {
+    const payload = { sub: userId, email, plan, role };
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
@@ -104,6 +135,7 @@ export class AuthService {
     email: string;
     avatarUrl: string | null;
     plan: string;
+    role: string;
   }) {
     return {
       id: user.id,
@@ -111,6 +143,7 @@ export class AuthService {
       email: user.email,
       avatarUrl: user.avatarUrl,
       plan: user.plan,
+      role: user.role,
     };
   }
 }

@@ -6,9 +6,44 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 enum Plan {
   FREE
   PREMIUM
+}
+
+enum GiftItemStatus {
+  ACTIVE
+  PURCHASED
+  EXPIRED
+}
+
+enum CoupleStatus {
+  PENDING
+  CONNECTED
+}
+
+enum SubscriptionPlan {
+  MONTHLY
+  YEARLY
+  COUPLE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  CANCELED
+  PAST_DUE
+}
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+  ZALO
 }
 
 model User {
@@ -21,15 +56,134 @@ model User {
   avatarUrl String?
 
   plan Plan @default(FREE)
+  role Role @default(USER)
 
   provider   String?
   providerId String?
 
   partnerId String?
 
-  refreshToken String? // ← thêm
-  isActive     Boolean @default(true) // ← thêm
+  refreshToken String?
+  isActive     Boolean @default(true)
+
+  wishlists     Wishlist[]
+  giftItems     GiftItem[]
+  anniversaries Anniversary[]
+  subscription  Subscription?
+
+  // Couple
+  coupleAsSender   CoupleConnection[] @relation("CoupleAsSender")
+  coupleAsReceiver CoupleConnection[] @relation("CoupleAsReceiver")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Wishlist {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  occasion    String?
+  isActive    Boolean @default(true)
+
+  // Share
+  isShared   Boolean @default(false)
+  shareToken String? @unique
+  sharedWith String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  giftItems GiftItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([shareToken])
+}
+
+model GiftItem {
+  id       String         @id @default(uuid())
+  name     String
+  price    Float?
+  url      String?
+  imageUrl String?
+  notes    String?
+  priority Int            @default(0)
+  status   GiftItemStatus @default(ACTIVE)
+
+  purchasedAt DateTime?
+  actualPrice Float?
+
+  wishlistId String
+  wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([wishlistId])
+  @@index([userId, status])
+}
+
+model Anniversary {
+  id        String   @id @default(uuid())
+  name      String
+  date      DateTime
+  recurring Boolean  @default(true)
+  isActive  Boolean  @default(true)
+
+  daysBefore Int[]                 @default([7])
+  channels   NotificationChannel[] @default([EMAIL])
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Subscription {
+  id     String             @id @default(uuid())
+  plan   SubscriptionPlan
+  status SubscriptionStatus @default(ACTIVE)
+
+  lemonSubscriptionId String? @unique
+  lemonCustomerId     String?
+  lemonOrderId        String?
+
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  cancelledAt        DateTime?
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CoupleConnection {
+  id     String       @id @default(uuid())
+  status CoupleStatus @default(PENDING)
+
+  senderId String
+  sender   User   @relation("CoupleAsSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  receiverId String
+  receiver   User   @relation("CoupleAsReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  connectedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([senderId, receiverId])
+  @@index([senderId])
+  @@index([receiverId])
 }

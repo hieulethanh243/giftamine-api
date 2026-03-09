@@ -19,6 +19,7 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { PlanGuard } from './common/guards/plan.guard';
 import { PassportModule } from '@nestjs/passport';
+import { RolesGuard } from './common/guards/roles.guard';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { PassportModule } from '@nestjs/passport';
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: PlanGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
   ],
 })
 export class AppModule {}
