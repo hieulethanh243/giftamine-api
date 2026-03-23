@@ -117,4 +117,25 @@ export class UsersService {
       meta: paginate(total, page, limit),
     };
   }
+
+  async searchUsers(currentUserId: string, search: string) {
+    return this.prisma.db.user.findMany({
+      where: {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+        ],
+        id: { not: currentUserId },
+        isActive: true,
+        role: 'USER',
+      },
+      take: 10,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        avatarUrl: true,
+      },
+    });
+  }
 }

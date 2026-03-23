@@ -4,6 +4,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  // uncomment next line if you use Prisma <5.10
+  // directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 enum Role {
@@ -20,6 +22,7 @@ enum GiftItemStatus {
   ACTIVE
   PURCHASED
   EXPIRED
+  CLAIMED
 }
 
 enum CoupleStatus {
@@ -77,6 +80,9 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  wishlistsSharedToMe WishlistShare[] @relation("SharedToMe")
+  wishlistsSharedByMe WishlistShare[] @relation("SharedByMe")
 }
 
 model Wishlist {
@@ -99,6 +105,8 @@ model Wishlist {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  shares WishlistShare[]
+
   @@index([userId])
   @@index([shareToken])
 }
@@ -113,6 +121,9 @@ model GiftItem {
   priority Int            @default(0)
   status   GiftItemStatus @default(ACTIVE)
 
+  claimedBy   String?
+  claimedAt   DateTime?
+  purchasedBy String?
   purchasedAt DateTime?
   actualPrice Float?
 
@@ -186,4 +197,24 @@ model CoupleConnection {
   @@unique([senderId, receiverId])
   @@index([senderId])
   @@index([receiverId])
+}
+
+model WishlistShare {
+  id String @id @default(uuid())
+
+  wishlistId String
+  wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+
+  sharedToId String
+  sharedTo   User   @relation("SharedToMe", fields: [sharedToId], references: [id], onDelete: Cascade)
+
+  sharedById String
+  sharedBy   User   @relation("SharedByMe", fields: [sharedById], references: [id], onDelete: Cascade)
+
+  acceptedAt DateTime? // null = chưa accept (nhận qua link)
+
+  createdAt DateTime @default(now())
+
+  @@unique([wishlistId, sharedToId])
+  @@index([sharedToId])
 }

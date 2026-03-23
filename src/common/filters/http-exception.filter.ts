@@ -36,9 +36,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       exceptionResponse !== null
     ) {
       const r = exceptionResponse as Record<string, any>;
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       code = r.code ?? code;
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       message = r.message ?? message;
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { code: _c, message: _m, statusCode: _s, error: _e, ...rest } = r;

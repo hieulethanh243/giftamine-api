@@ -1,6 +1,11 @@
 import { Body, Controller, Get, Patch, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { CurrentUser } from 'src/common/decorators';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { QueryUsersDto } from './dto/query-users.dto';
@@ -37,6 +42,18 @@ export class UsersController {
   @ApiOperation({ summary: 'Get all users' })
   async getUsers(@Query() dto: QueryUsersDto) {
     const data = await this.userService.getUsers(dto);
+    return { data, message: 'Users retrieved successfully' };
+  }
+
+  @Get('search')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Search users by name or email' })
+  @ApiQuery({ name: 'q', required: true, example: 'john' })
+  async searchUsers(
+    @Query('q') query: string,
+    @CurrentUser('sub') userId: string,
+  ) {
+    const data = await this.userService.searchUsers(userId, query);
     return { data, message: 'Users retrieved successfully' };
   }
 }
