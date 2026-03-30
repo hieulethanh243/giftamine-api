@@ -1,23 +1,25 @@
-# Use Node.js 18 Alpine as base image
-FROM node:18-alpine AS base
+# Sử dụng Node 20 để tránh lỗi ESM
+FROM node:20-alpine AS base
 
-# Install pnpm
+# Cài đặt pnpm
 RUN npm install -g pnpm
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files
+# Copy file cấu hình
 COPY package.json pnpm-lock.yaml ./
+COPY prisma ./prisma/
 
-# Install dependencies
+# Cài đặt deps (đảm bảo cho phép chạy script của prisma)
 RUN pnpm install --frozen-lockfile
 
-# Copy source code
+# Copy toàn bộ code
 COPY . .
 
-# Generate Prisma client
+# Generate Prisma client (Lúc này Node 20 sẽ xử lý tốt ESM)
 RUN pnpm prisma generate
+
+# ... các bước build tiếp theo
 
 # Build the application
 RUN pnpm build
