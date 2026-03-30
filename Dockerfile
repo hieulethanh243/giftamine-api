@@ -41,7 +41,7 @@ RUN pnpm install --frozen-lockfile --prod
 
 # Copy built application from base stage
 COPY --from=base /app/dist ./dist
-COPY --from=base /app/generated ./generated
+#COPY --from=base /app/generated ./generated
 COPY --from=base /app/prisma ./prisma
 
 # Copy entrypoint script
