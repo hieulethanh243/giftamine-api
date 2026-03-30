@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: giftamine-api
+    env: docker
+    branch: prod
+    autoDeploy: true
+    dockerfilePath: Dockerfile
+    healthCheckPath: /api-docs
+    plan: free
