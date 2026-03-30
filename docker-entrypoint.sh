@@ -1,19 +1,16 @@
 #!/bin/sh
 set -e
 
-# Tách Host và Port từ biến DATABASE_URL (nếu có) hoặc dùng biến riêng
-# Nếu bạn không muốn phức tạp, có thể bỏ qua đoạn 'while' này trên Render
+# 1. Bỏ qua bước check DB bằng nc nếu bạn thấy phiền, hoặc sửa thành:
 if [ -n "$DB_HOST" ]; then
-  echo "Waiting for database at $DB_HOST:5432..."
-  # Thêm thời gian timeout 30s để tránh treo vô hạn
-  timeout 30s sh -c "until nc -z $DB_HOST 5432; do sleep 1; done" || echo "Database check timed out, trying to proceed anyway..."
+  echo "🔍 Checking database connection..."
+  timeout 15s sh -c "until nc -z $DB_HOST 5432; do sleep 1; done" || echo "⚠️ Skip DB check..."
 fi
 
-# Chạy database migrations
-echo "Running database migrations..."
-# Sử dụng npx hoặc pnpm đều được, nhưng npx thường nhẹ hơn ở bước này
-npx prisma migrate deploy
+# 2. SỬA DÒNG NÀY (Cực kỳ quan trọng)
+echo "🚀 Running database migrations..."
+# Dùng pnpm để nó lấy đúng bản Prisma 7 bạn đã cài trong project
+pnpm prisma migrate deploy
 
-# Start the application
-echo "Starting the application..."
+echo "✅ Starting application..."
 exec "$@"
