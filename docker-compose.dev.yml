@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://giftamine:password@postgres:5432/giftamine?schema=public
+      - PORT=3000
+      # Add other environment variables as needed
+      # - REDIS_URL=redis://redis:6379
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # redis:
+    #   condition: service_started
+    restart: unless-stopped
+    networks:
+      - giftamine-network
+    command: pnpm start:dev
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=giftamine
+      - POSTGRES_USER=giftamine
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U giftamine -d giftamine"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - giftamine-network
+
+  # redis:
+  #   image: redis:7-alpine
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   restart: unless-stopped
+  #   networks:
+  #     - giftamine-network
+
+volumes:
+  postgres_data:
+  # redis_data:
+
+networks:
+  giftamine-network:
+    driver: bridge

@@ -130,7 +130,41 @@ http://localhost:3000
 
 ---
 
-# API Modules
+# Docker
+
+## Development
+
+To run the application with Docker Compose in development mode:
+
+```
+docker-compose -f docker-compose.dev.yml up --build
+```
+
+This will start the NestJS app with hot reload, PostgreSQL database, and mount your source code.
+
+## Production
+
+To run the application in production mode:
+
+```
+docker-compose up --build
+```
+
+This will build and run the optimized production image with PostgreSQL.
+
+## Environment Variables
+
+For Docker, environment variables are set in the `docker-compose.yml` files. You can override them by creating a `.env` file or modifying the compose files.
+
+Default database connection:
+
+- Host: postgres
+- Port: 5432
+- Database: giftamine
+- User: giftamine
+- Password: password
+
+---
 
 ## Auth
 
